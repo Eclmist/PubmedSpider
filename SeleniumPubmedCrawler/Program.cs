@@ -15,7 +15,7 @@ namespace SeleniumPubmedCrawler
         static ChromeDriver driver;
         static List<Article> articleList = new List<Article>();
 
-
+        static int perQueryCounter = 0;
 
         static void Main(string[] args)
         {
@@ -47,26 +47,34 @@ namespace SeleniumPubmedCrawler
         {
             var options = new ChromeOptions();
 
+            ChromeDriverService service = ChromeDriverService.CreateDefaultService();
+            service.SuppressInitialDiagnosticInformation = true;
+
+
 #if !DEBUG
                 options.AddArguments("--headless", "--disable-gpu", "--ignore-certificate-errors", "--incognito");
-                options.AddArgument("--log-level=1");
-                options.AddArgument("--silent");
+                options.AddArgument("--log-level=3");
 #endif
-            return new ChromeDriver(options);
+            return new ChromeDriver(service, options);
         }
 
         static void Crawl(string url)
         {
-            Console.WriteLine("[Info] Downloading index");
-            driver.Navigate().GoToUrl(url);
-            Console.WriteLine("[Success] Webpage loaded");
+
+            foreach (string name in Constants.tempNames)
+            {
+                Console.WriteLine("\n[Info] Downloading index for " + name);
+                driver.Navigate().GoToUrl(url + " " + name);
+                Console.WriteLine("[Success] Webpage loaded");
 
 
-            string count = driver.FindElementByClassName(Constants.INDEX_ITEMCOUNT_CLASS_NAME).Text.Split(' ').Last();
+                string count = driver.FindElementByClassName(Constants.INDEX_ITEMCOUNT_CLASS_NAME).Text.Split(' ').Last();
 
-            Console.WriteLine("[Info] " + count + " results found");
+                Console.WriteLine("[Info] " + count + " results found");
 
-            CrawlIndex();
+                perQueryCounter = 0;
+                CrawlIndex();
+            }
         }
 
         static void CrawlIndex()
@@ -85,14 +93,15 @@ namespace SeleniumPubmedCrawler
             foreach (string url in currentPageArticlesURLS)
             {
                 CrawlDetails(url, detailDriver);
+                perQueryCounter++;
 
-                if (articleList.Count >= Constants.MAX_ARTICLE_COUNT_PER_QUERY)
+                if (perQueryCounter >= Constants.MAX_ARTICLE_COUNT_PER_QUERY)
                     break;
             }
 
             detailDriver.Dispose();
 
-            if (articleList.Count < Constants.MAX_ARTICLE_COUNT_PER_QUERY)
+            if (!(perQueryCounter >= Constants.MAX_ARTICLE_COUNT_PER_QUERY))
             {
                 try
                 {
@@ -105,10 +114,12 @@ namespace SeleniumPubmedCrawler
                 }
                 catch (Exception e)
                 {
+                    // cannot find next button, ignore error.
+                    Console.WriteLine("[Success] Reached the end of the results");
                 }
             }
 
-            Console.WriteLine("[Success] Reached the end of the results");
+            Console.WriteLine("[Success] Reached max article per query count");
         }
 
         static void CrawlDetails(string url, ChromeDriver driver)
@@ -127,8 +138,8 @@ namespace SeleniumPubmedCrawler
 
             string title = driver.FindElementByXPath(Constants.DETAIL_TITLE_XPATH).Text;
             string abstractText = driver.FindElementByCssSelector(Constants.DETAIL_ABSTRACT_CSS_SELECTOR).Text;
-            string journal = driver.FindElementByXPath(Constants.DETAILS_JOURNAL_XPATH).Text;
-            string date = driver.FindElementByXPath(Constants.DETAILS_DATE_XPATH).Text.Split('.')[0];
+            string journal = driver.FindElementByXPath(Constants.DETAILS_JOURNAL_XPATH).Text.Split('.')[0];
+            string date = driver.FindElementByXPath(Constants.DETAILS_DATE_XPATH).Text.Split('.')[1].TrimStart(' ');
 
             Article a = new Article();
             a.title = title;
@@ -139,14 +150,17 @@ namespace SeleniumPubmedCrawler
 
             articleList.Add(a);
 
-            Console.WriteLine("\n[Success] Article " + a.ToString() + " added");
+            Console.WriteLine("[Success] Article " + a.ToString() + " added");
         }
 
         static void ExportJSON()
         {
-            Console.WriteLine("[Info] Exporting results to JSON");
+            Console.WriteLine("\n[Info] Exporting results to JSON");
 
-            using (StreamWriter file = File.CreateText(@"dump_" + DateTime.Now.ToString("yyyy_MM_dd_HHmm") + ".json"))
+            if (!Directory.Exists("dump")) 
+                Directory.CreateDirectory("dump");
+
+            using (StreamWriter file = File.CreateText(@"dump\dump_" + DateTime.Now.ToString("yyyy_MM_dd_HHmm") + ".json"))
             {
                 JsonSerializer serializer = new JsonSerializer();
                 //serialize object directly into file stream

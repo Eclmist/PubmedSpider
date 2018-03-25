@@ -11,9 +11,12 @@ namespace SeleniumPubmedCrawler
         public const string PUBMED_URL = @"https://www.ncbi.nlm.nih.gov/pubmed/?term=";
         public const string QUERY_PREFIX = @"National University Of Singapore";
 
-        // Number of articles to crawl before stopping
+        // Number of articles to crawl before stopping (per name)
         public const int MAX_ARTICLE_COUNT_PER_QUERY = 2;
 
+        // Names (temp list)
+        public static readonly string[] tempNames = { "Markus R Wenk", "Wong Wai-Shiu, Fred" };
+        
         public const string INDEX_TITLE_CLASS_NAME = "title";
         public const string INDEX_ITEMCOUNT_CLASS_NAME = "result_count";
         public const string DETAIL_TITLE_XPATH = "//*[@id=\"maincontent\"]/div/div[5]/div/h1";
