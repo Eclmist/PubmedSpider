@@ -13,7 +13,7 @@ namespace SeleniumPubmedCrawler
         public string abstractTxt;
         public string journal;
 
-        public DateTime date;
+        public string date;
 
         public override string ToString()
         {

@@ -1,26 +1,16 @@
-﻿using OpenQA.Selenium;
+﻿using Newtonsoft.Json;
+using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace SeleniumPubmedCrawler
 {
-#pragma DEBUG_MODE
 
     class Program
     {
-        const string PUBMED_URL = @"https://www.ncbi.nlm.nih.gov/pubmed/?term=";
-        const string QUERY = @"National University Of Singapore Markus R Wenk";
-
-        const string INDEX_TITLE_CLASS_NAME = "title";
-        const string INDEX_ITEMCOUNT_CLASS_NAME = "result_count";
-        const string DETAIL_TITLE_XPATH = "//*[@id=\"maincontent\"]/div/div[5]/div/h1";
-        const string DETAIL_AUTHOR_CLASS_NAME = "auths";
-        const string DETAIL_ABSTRACT_CSS_SELECTOR = "abstracttext";
-        const string DETAILS_JOURNAL_XPATH = "//*[@id=\"maincontent\"]/div/div[5]/div/div[1]/span/a";
-        const string DETAILS_DATE_XPATH = "//*[@id=\"maincontent\"]/div/div[5]/div/div[1]";
-        const int MAX_ARTICLE_COUNT = 10;
 
         static ChromeDriver driver;
         static List<Article> articleList = new List<Article>();
@@ -33,7 +23,7 @@ namespace SeleniumPubmedCrawler
 
             driver = SetupDriver();
 
-            Crawl(PUBMED_URL + QUERY);
+            Crawl(Constants.PUBMED_URL + Constants.QUERY_PREFIX);
 
             ExportJSON();
 
@@ -44,7 +34,7 @@ namespace SeleniumPubmedCrawler
         static void PrintHeaders()
         {
             Console.WriteLine("Pubmed Spider v1.0");
-            Console.WriteLine("Using search query: " + QUERY);
+            Console.WriteLine("Using search query: " + Constants.QUERY_PREFIX);
         }
 
         static string GetInput(string question)
@@ -72,11 +62,9 @@ namespace SeleniumPubmedCrawler
             Console.WriteLine("[Success] Webpage loaded");
 
 
-            string count = driver.FindElementByClassName(INDEX_ITEMCOUNT_CLASS_NAME).Text.Split(' ').Last();
+            string count = driver.FindElementByClassName(Constants.INDEX_ITEMCOUNT_CLASS_NAME).Text.Split(' ').Last();
 
             Console.WriteLine("[Info] " + count + " results found");
-
-
 
             CrawlIndex();
         }
@@ -87,7 +75,7 @@ namespace SeleniumPubmedCrawler
 
             ChromeDriver detailDriver = SetupDriver();
 
-            var titles = driver.FindElementsByClassName(INDEX_TITLE_CLASS_NAME);
+            var titles = driver.FindElementsByClassName(Constants.INDEX_TITLE_CLASS_NAME);
 
             foreach (var link in titles)
             {
@@ -98,13 +86,13 @@ namespace SeleniumPubmedCrawler
             {
                 CrawlDetails(url, detailDriver);
 
-                if (articleList.Count >= MAX_ARTICLE_COUNT)
+                if (articleList.Count >= Constants.MAX_ARTICLE_COUNT_PER_QUERY)
                     break;
             }
 
             detailDriver.Dispose();
 
-            if (articleList.Count < MAX_ARTICLE_COUNT)
+            if (articleList.Count < Constants.MAX_ARTICLE_COUNT_PER_QUERY)
             {
                 try
                 {
@@ -129,7 +117,7 @@ namespace SeleniumPubmedCrawler
 
             List<String> authors = new List<string>();
 
-            var listOfAuthorNames = driver.FindElementByClassName(DETAIL_AUTHOR_CLASS_NAME)
+            var listOfAuthorNames = driver.FindElementByClassName(Constants.DETAIL_AUTHOR_CLASS_NAME)
                 .FindElements(By.CssSelector("a"));
 
             foreach (IWebElement author in listOfAuthorNames)
@@ -137,27 +125,33 @@ namespace SeleniumPubmedCrawler
                 authors.Add(author.Text);
             }
 
-            string title = driver.FindElementByXPath(DETAIL_TITLE_XPATH).Text;
-            string abstractText = driver.FindElementByCssSelector(DETAIL_ABSTRACT_CSS_SELECTOR).Text;
-            string journal = driver.FindElementByXPath(DETAILS_JOURNAL_XPATH).Text;
-            string date = driver.FindElementByXPath(DETAILS_DATE_XPATH).Text;
+            string title = driver.FindElementByXPath(Constants.DETAIL_TITLE_XPATH).Text;
+            string abstractText = driver.FindElementByCssSelector(Constants.DETAIL_ABSTRACT_CSS_SELECTOR).Text;
+            string journal = driver.FindElementByXPath(Constants.DETAILS_JOURNAL_XPATH).Text;
+            string date = driver.FindElementByXPath(Constants.DETAILS_DATE_XPATH).Text.Split('.')[0];
 
             Article a = new Article();
             a.title = title;
             a.authors = authors.ToArray();
             a.abstractTxt = abstractText;
             a.journal = journal;
+            a.date = date;
 
             articleList.Add(a);
 
-            Console.WriteLine(
-                "[Success] Article " + a.ToString() + " added\n"
-                );
+            Console.WriteLine("\n[Success] Article " + a.ToString() + " added");
         }
 
         static void ExportJSON()
         {
             Console.WriteLine("[Info] Exporting results to JSON");
+
+            using (StreamWriter file = File.CreateText(@"dump_" + DateTime.Now.ToString("yyyy_MM_dd_HHmm") + ".json"))
+            {
+                JsonSerializer serializer = new JsonSerializer();
+                //serialize object directly into file stream
+                serializer.Serialize(file, articleList);
+            }
 
             Console.WriteLine("[Success] Data successfully exported");
         }
