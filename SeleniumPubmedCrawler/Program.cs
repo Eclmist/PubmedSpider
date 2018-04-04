@@ -33,7 +33,7 @@ namespace SeleniumPubmedCrawler
 
         static void PrintHeaders()
         {
-            Console.WriteLine("Pubmed Spider v1.0");
+            Console.WriteLine("Pubmed Spider");
             Console.WriteLine("Using search query: " + Constants.QUERY_PREFIX);
         }
 
@@ -60,21 +60,34 @@ namespace SeleniumPubmedCrawler
 
         static void Crawl(string url)
         {
+            string[] names = GetNamesToCrawl();
 
-            foreach (string name in Constants.tempNames)
+            foreach (string name in names)
             {
                 Console.WriteLine("\n[Info] Downloading index for " + name);
                 driver.Navigate().GoToUrl(url + " " + name);
                 Console.WriteLine("[Success] Webpage loaded");
 
-
-                string count = driver.FindElementByClassName(Constants.INDEX_ITEMCOUNT_CLASS_NAME).Text.Split(' ').Last();
-
-                Console.WriteLine("[Info] " + count + " results found");
-
                 perQueryCounter = 0;
                 CrawlIndex();
             }
+        }
+
+        static string[] GetNamesToCrawl()
+        {
+            string[] lines = { };
+
+            try
+            {
+                lines = System.IO.File.ReadAllLines(@"Names.txt");
+            }
+            catch (FileNotFoundException e)
+            {
+                Console.WriteLine("[Error] Names.txt is empty!");
+                System.IO.File.Create(@"Names.txt");
+            }
+
+            return lines;
         }
 
         static void CrawlIndex()

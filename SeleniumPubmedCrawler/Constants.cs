@@ -15,7 +15,7 @@ namespace SeleniumPubmedCrawler
         public const int MAX_ARTICLE_COUNT_PER_QUERY = 2;
 
         // Names (temp list)
-        public static readonly string[] tempNames = { "Markus R Wenk", "Wong Wai-Shiu, Fred" };
+        // public static readonly string[] tempNames = { "Markus R Wenk", "Wong Wai-Shiu, Fred" };
         
         public const string INDEX_TITLE_CLASS_NAME = "title";
         public const string INDEX_ITEMCOUNT_CLASS_NAME = "result_count";
