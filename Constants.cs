@@ -9,7 +9,7 @@ namespace SeleniumPubmedCrawler
     class Constants
     {
         public const string PUBMED_URL = @"https://www.ncbi.nlm.nih.gov/pubmed/?term=";
-        public const string QUERY_PREFIX = @"National University Of Singapore";
+        public const string QUERY_PREFIX = @"(National University Of Singapore[Affiliation] AND ";
 
         // Number of articles to crawl before stopping (per name)
         public const int MAX_ARTICLE_COUNT_PER_QUERY = 2;

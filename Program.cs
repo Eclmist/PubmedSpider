@@ -29,6 +29,7 @@ namespace SeleniumPubmedCrawler
             
             if (journalsThatMatters.Length <= 0)
             {
+                Console.WriteLine("[Error] IF.txt empty! Exiting..");
                 Cleanup();
                 return;
             }
@@ -44,7 +45,6 @@ namespace SeleniumPubmedCrawler
         static void PrintHeaders()
         {
             Console.WriteLine("Pubmed Spider");
-            Console.WriteLine("Using search query: " + Constants.QUERY_PREFIX);
         }
 
         static string GetInput(string question)
@@ -73,10 +73,16 @@ namespace SeleniumPubmedCrawler
         {
             string[] names = GetNamesToCrawl();
 
+            if (names.Length == 0)
+                Console.WriteLine("[Error] Name.txt empty! Exiting..");
+
             foreach (string name in names)
             {
-                Console.WriteLine("\n[Info] Downloading index for " + name);
-                driver.Navigate().GoToUrl(url + " " + name);
+                string query = url + name + "[Author - First])";
+
+                Console.WriteLine(query);
+                
+                driver.Navigate().GoToUrl(query);
                 Console.WriteLine("[Success] Webpage loaded");
 
                 perQueryCounter = 0;
@@ -95,7 +101,7 @@ namespace SeleniumPubmedCrawler
             catch
             {
             
-                Console.WriteLine("[Error] Names.txt is empty!");
+                Console.WriteLine("[Error] Names.txt does not exist! Creating empty Names.txt file.");
                 System.IO.File.Create(@"Names.txt");
             }
 
@@ -114,7 +120,7 @@ namespace SeleniumPubmedCrawler
             catch
             {
             
-                Console.WriteLine("[Error] IF.txt is empty!");
+                Console.WriteLine("[Error] IF.txt does not exist! Creating empty IF.txt file.");
                 System.IO.File.Create(@"IF.txt");
             }
 
@@ -131,18 +137,27 @@ namespace SeleniumPubmedCrawler
 
             foreach (var link in titles)
             {
-                currentPageArticlesURLS.Add(link.FindElement(By.CssSelector("a")).GetAttribute("href"));
+                // check if is part of journals that matters
+                var followingSibling = link.FindElement(By.XPath("following-sibling::*")).FindElement(By.XPath("p[2]/span")).Text;
+
+                foreach(string j in journalsThatMatters)
+                {
+                    if (followingSibling == j)
+                    {
+                        currentPageArticlesURLS.Add(link.FindElement(By.CssSelector("a")).GetAttribute("href"));
+                        break;
+                    }
+                }
             }
 
             foreach (string url in currentPageArticlesURLS)
             {
-                if (CrawlDetails(url, detailDriver))
-                {
-                    perQueryCounter++;
+                CrawlDetails(url, detailDriver);
+                
+                perQueryCounter++;
 
-                    if (perQueryCounter >= Constants.MAX_ARTICLE_COUNT_PER_QUERY)
-                        break;
-                }
+                if (perQueryCounter >= Constants.MAX_ARTICLE_COUNT_PER_QUERY)
+                    break;
             }
 
             detailDriver.Dispose();
@@ -169,7 +184,7 @@ namespace SeleniumPubmedCrawler
         }
 
         // returns true if article has sufficient impact factor
-        static bool CrawlDetails(string url, ChromeDriver driver)
+        static void CrawlDetails(string url, ChromeDriver driver)
         {
             driver.Navigate().GoToUrl(url);
 
@@ -195,20 +210,9 @@ namespace SeleniumPubmedCrawler
             a.journal = journal;
             a.date = date;
 
-            foreach(string j in journalsThatMatters)
-            {
-                if (j == a.journal)
-                {
+            articleList.Add(a);
 
-                    articleList.Add(a);
-
-                    Console.WriteLine("[Success] Article " + a.ToString() + " added, from " + j);
-
-                    return true;                    
-                }
-            }
-
-            return false;
+            Console.WriteLine("[Success] Article " + a.ToString() + " added, from " + journal);
         }
 
         static void ExportJSON()
