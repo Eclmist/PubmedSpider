@@ -1,0 +1,10 @@
+C:\Users\eclmi\Documents\Repos\PubmedSpiderCore\bin\Release\netcoreapp2.0\PubmedSpiderCore.deps.json
+C:\Users\eclmi\Documents\Repos\PubmedSpiderCore\bin\Release\netcoreapp2.0\PubmedSpiderCore.runtimeconfig.json
+C:\Users\eclmi\Documents\Repos\PubmedSpiderCore\bin\Release\netcoreapp2.0\PubmedSpiderCore.runtimeconfig.dev.json
+C:\Users\eclmi\Documents\Repos\PubmedSpiderCore\bin\Release\netcoreapp2.0\PubmedSpiderCore.dll
+C:\Users\eclmi\Documents\Repos\PubmedSpiderCore\bin\Release\netcoreapp2.0\PubmedSpiderCore.pdb
+C:\Users\eclmi\Documents\Repos\PubmedSpiderCore\obj\Release\netcoreapp2.0\PubmedSpiderCore.csproj.CoreCompileInputs.cache
+C:\Users\eclmi\Documents\Repos\PubmedSpiderCore\obj\Release\netcoreapp2.0\PubmedSpiderCore.AssemblyInfoInputs.cache
+C:\Users\eclmi\Documents\Repos\PubmedSpiderCore\obj\Release\netcoreapp2.0\PubmedSpiderCore.AssemblyInfo.cs
+C:\Users\eclmi\Documents\Repos\PubmedSpiderCore\obj\Release\netcoreapp2.0\PubmedSpiderCore.dll
+C:\Users\eclmi\Documents\Repos\PubmedSpiderCore\obj\Release\netcoreapp2.0\PubmedSpiderCore.pdb

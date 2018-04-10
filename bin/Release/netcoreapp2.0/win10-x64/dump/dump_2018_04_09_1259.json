@@ -1,0 +1,52 @@
+[
+    {
+        "authors": [
+            "Trigueros-Motos L",
+            "van Capelleveen JC",
+            "Torta F",
+            "Castaño D",
+            "Zhang LH",
+            "Chai EC",
+            "Kang M",
+            "Dimova LG",
+            "Schimmel AWM",
+            "Tietjen I",
+            "Radomski C",
+            "Tan LJ",
+            "Thiam CH",
+            "Narayanaswamy P",
+            "Wu DH",
+            "Dorninger F",
+            "Yakala GK",
+            "Barhdadi A",
+            "Angeli V",
+            "Dubé MP",
+            "Berger J",
+            "Dallinga-Thie GM",
+            "Tietge UJF",
+            "Wenk MR",
+            "Hayden MR",
+            "Hovingh GK",
+            "Singaraja RR"
+        ],
+        "title": "ABCA8 Regulates Cholesterol Efflux and High-Density Lipoprotein Cholesterol Levels.",
+        "abstractTxt": "High-density lipoproteins (HDL) are considered to protect against atherosclerosis in part by facilitating the removal of cholesterol from peripheral tissues. However, factors regulating lipid efflux are incompletely understood. We previously identified a variant in adenosine triphosphate-binding cassette transporter A8 (ABCA8) in an individual with low HDL cholesterol (HDLc). Here, we investigate the role of ABCA8 in cholesterol efflux and in regulating HDLc levels.",
+        "journal": "Arterioscler Thromb Vasc Biol",
+        "date": "2017 Nov;37(11):2147-2155"
+    },
+    {
+        "authors": [
+            "Ravindran MS",
+            "Rao SP",
+            "Cheng X",
+            "Shukla A",
+            "Cazenave-Gassiot A",
+            "Yao SQ",
+            "Wenk MR"
+        ],
+        "title": "Targeting lipid esterases in mycobacteria grown under different physiological conditions using activity-based profiling with tetrahydrolipstatin (THL).",
+        "abstractTxt": "Tetrahydrolipstatin (THL) is bactericidal but its precise target spectrum is poorly characterized. Here, we used a THL analog and activity-based protein profiling to identify target proteins after enrichment from whole cell lysates of Mycobacterium bovis Bacillus Calmette-Guérin cultured under replicating and non-replicating conditions. THL targets α/β-hydrolases, including many lipid esterases (LipD, G, H, I, M, N, O, V, W, and TesA). Target protein concentrations and total esterase activity correlated inversely with cellular triacylglycerol upon entry into and exit from non-replicating conditions. Cellular overexpression of lipH and tesA led to decreased THL susceptibility thus providing functional validation. Our results define the target spectrum of THL in a biological species with particularly diverse lipid metabolic pathways. We furthermore derive a conceptual approach that demonstrates the use of such THL probes for the characterization of substrate recognition by lipases and related enzymes.",
+        "journal": "Mol Cell Proteomics",
+        "date": "2014 Feb;13(2):435-48"
+    }
+]

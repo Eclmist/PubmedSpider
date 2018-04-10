@@ -1,0 +1,1 @@
+C:\Users\eclmi\Documents\Repos\PubmedSpiderCore\bin\Debug\netcoreapp2.0\PubmedSpiderCore.dll
