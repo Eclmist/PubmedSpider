@@ -134,16 +134,15 @@ namespace SeleniumPubmedCrawler
             //ChromeDriver detailDriver = SetupDriver();
 
             var titles = driver.FindElementsByClassName(Constants.INDEX_TITLE_CLASS_NAME);
-
+            var journals = driver.FindElementsByClassName(Constants.INDEX_JOURNAL_CLASS_NAME);
             for (int i = 0; i < titles.Count; i++)
             {
                 Console.WriteLine("Checking index " + i + " for impact factor");
                 // check if is part of journals that matters
-                var followingSibling = titles[i].FindElement(By.XPath("following-sibling::*")).FindElement(By.XPath("p[2]/span")).Text;
-
+                Console.WriteLine("current journal: " + journals[i].Text);
                 foreach(string j in journalsThatMatters)
                 {
-                    if (followingSibling == j)
+                    if (journals[i].Text == j)
                     {
                         currentPageArticlesURLS.Add(titles[i].FindElement(By.CssSelector("a")).GetAttribute("href"), j);
                         break;
