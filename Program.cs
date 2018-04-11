@@ -145,7 +145,6 @@ namespace SeleniumPubmedCrawler
                 if (journalsThatMatters.Any(highImpactJournals => highImpactJournals == currentJournal))
                 {
                     currentPageArticlesURLS.Add(titles[i].FindElement(By.CssSelector("a")).GetAttribute("href"), currentJournal);
-                    break;
                 }
             
                 perQueryCounter++;
