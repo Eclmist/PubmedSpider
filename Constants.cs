@@ -21,8 +21,10 @@ namespace SeleniumPubmedCrawler
         public const string INDEX_ITEMCOUNT_CLASS_NAME = "result_count";
         public const string DETAIL_TITLE_XPATH = "//*[@id=\"maincontent\"]/div/div[5]/div/h1";
         public const string DETAIL_AUTHOR_CLASS_NAME = "auths";
+        public const string DETAIL_AUTHOR_XPATH = "//*[@id=\"maincontent\"]/div/div[5]/div/div[2]/a";
         public const string DETAIL_ABSTRACT_CSS_SELECTOR = "abstracttext";
         public const string DETAILS_JOURNAL_XPATH = "//*[@id=\"maincontent\"]/div/div[5]/div/div[1]/span/a";
         public const string DETAILS_DATE_XPATH = "//*[@id=\"maincontent\"]/div/div[5]/div/div[1]";
+        public const string DETAIL_ABSTRACT_XPATH = "//*[@id=\"maincontent\"]/div/div[5]/div/div[4]/div/p/abstracttext";
     }
 }

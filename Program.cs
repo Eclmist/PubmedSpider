@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
+using HtmlAgilityPack;
 
 namespace SeleniumPubmedCrawler
 {
@@ -129,30 +130,30 @@ namespace SeleniumPubmedCrawler
 
         static void CrawlIndex()
         {
-            List<string> currentPageArticlesURLS = new List<string>();
-
-            ChromeDriver detailDriver = SetupDriver();
+            Dictionary<string,string> currentPageArticlesURLS = new Dictionary<string, string>();
+            //ChromeDriver detailDriver = SetupDriver();
 
             var titles = driver.FindElementsByClassName(Constants.INDEX_TITLE_CLASS_NAME);
 
-            foreach (var link in titles)
+            for (int i = 0; i < titles.Count; i++)
             {
+                Console.WriteLine("Checking index " + i + " for impact factor");
                 // check if is part of journals that matters
-                var followingSibling = link.FindElement(By.XPath("following-sibling::*")).FindElement(By.XPath("p[2]/span")).Text;
+                var followingSibling = titles[i].FindElement(By.XPath("following-sibling::*")).FindElement(By.XPath("p[2]/span")).Text;
 
                 foreach(string j in journalsThatMatters)
                 {
                     if (followingSibling == j)
                     {
-                        currentPageArticlesURLS.Add(link.FindElement(By.CssSelector("a")).GetAttribute("href"));
+                        currentPageArticlesURLS.Add(titles[i].FindElement(By.CssSelector("a")).GetAttribute("href"), j);
                         break;
                     }
                 }
             }
 
-            foreach (string url in currentPageArticlesURLS)
+            foreach (var url in currentPageArticlesURLS)
             {
-                CrawlDetails(url, detailDriver);
+                CrawlDetails(url.Key, url.Value);//, detailDriver);
                 
                 perQueryCounter++;
 
@@ -160,7 +161,7 @@ namespace SeleniumPubmedCrawler
                     break;
             }
 
-            detailDriver.Dispose();
+            //detailDriver.Dispose();
 
             if (!(perQueryCounter >= Constants.MAX_ARTICLE_COUNT_PER_QUERY))
             {
@@ -184,24 +185,48 @@ namespace SeleniumPubmedCrawler
         }
 
         // returns true if article has sufficient impact factor
-        static void CrawlDetails(string url, ChromeDriver driver)
+        static void CrawlDetails(string url, string journal)//, ChromeDriver driver)
         {
-            driver.Navigate().GoToUrl(url);
+            Console.WriteLine("details");
+            // driver.Navigate().GoToUrl(url);
 
             List<String> authors = new List<string>();
 
-            var listOfAuthorNames = driver.FindElementByClassName(Constants.DETAIL_AUTHOR_CLASS_NAME)
-                .FindElements(By.CssSelector("a"));
+            // var listOfAuthorNames = driver.FindElementByClassName(Constants.DETAIL_AUTHOR_CLASS_NAME)
+            //     .FindElements(By.CssSelector("a"));
 
-            foreach (IWebElement author in listOfAuthorNames)
+            // foreach (IWebElement author in listOfAuthorNames)
+            // {
+            //     authors.Add(author.Text);
+            // }
+
+            // string title = driver.FindElementByXPath(Constants.DETAIL_TITLE_XPATH).Text;
+            // string abstractText = driver.FindElementByCssSelector(Constants.DETAIL_ABSTRACT_CSS_SELECTOR).Text;
+            // string journal = driver.FindElementByXPath(Constants.DETAILS_JOURNAL_XPATH).Text.Split('.')[0];
+            // string date = driver.FindElementByXPath(Constants.DETAILS_DATE_XPATH).Text.Split('.')[1].TrimStart(' ');
+
+            var web = new HtmlWeb();
+            var doc = web.Load(url);
+
+            var listOfAuthorNames = doc.DocumentNode.SelectNodes(Constants.DETAIL_AUTHOR_XPATH);
+
+            foreach (var node in listOfAuthorNames)
             {
-                authors.Add(author.Text);
+                authors.Add(node.InnerText);
             }
 
-            string title = driver.FindElementByXPath(Constants.DETAIL_TITLE_XPATH).Text;
-            string abstractText = driver.FindElementByCssSelector(Constants.DETAIL_ABSTRACT_CSS_SELECTOR).Text;
-            string journal = driver.FindElementByXPath(Constants.DETAILS_JOURNAL_XPATH).Text.Split('.')[0];
-            string date = driver.FindElementByXPath(Constants.DETAILS_DATE_XPATH).Text.Split('.')[1].TrimStart(' ');
+            var title = doc.DocumentNode
+                .SelectSingleNode(Constants.DETAIL_TITLE_XPATH)
+                .InnerText;
+
+            var abstractText = doc.DocumentNode
+                .SelectSingleNode(Constants.DETAIL_ABSTRACT_XPATH)
+                .InnerText;
+
+            var date = doc.DocumentNode
+                .SelectSingleNode(Constants.DETAILS_DATE_XPATH)
+                .InnerText.Split('.')[1].TrimStart(' ');
+
 
             Article a = new Article();
             a.title = title;
@@ -216,7 +241,7 @@ namespace SeleniumPubmedCrawler
         }
 
         static void ExportJSON()
-        {
+    {
             Console.WriteLine("\n[Info] Exporting results to JSON");
 
             if (!Directory.Exists("dump")) 
