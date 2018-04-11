@@ -79,7 +79,7 @@ namespace SeleniumPubmedCrawler
 
             foreach (string name in names)
             {
-                string query = url + name + "[Author - First])";
+                string query = url + name + "[Author])";
 
                 Console.WriteLine(query);
                 
@@ -139,25 +139,31 @@ namespace SeleniumPubmedCrawler
             {
                 Console.WriteLine("Checking index " + i + " for impact factor");
                 // check if is part of journals that matters
-                Console.WriteLine("current journal: " + journals[i].Text);
-                foreach(string j in journalsThatMatters)
-                {
-                    if (journals[i].Text == j)
-                    {
-                        currentPageArticlesURLS.Add(titles[i].FindElement(By.CssSelector("a")).GetAttribute("href"), j);
-                        break;
-                    }
-                }
-            }
-
-            foreach (var url in currentPageArticlesURLS)
-            {
-                CrawlDetails(url.Key, url.Value);//, detailDriver);
+                string currentJournal = journals[i].Text;
+                Console.WriteLine("current journal: " + currentJournal);
                 
+                if (journalsThatMatters.Any(highImpactJournals => highImpactJournals == currentJournal))
+                {
+                    currentPageArticlesURLS.Add(titles[i].FindElement(By.CssSelector("a")).GetAttribute("href"), currentJournal);
+                    break;
+                }
+            
                 perQueryCounter++;
 
                 if (perQueryCounter >= Constants.MAX_ARTICLE_COUNT_PER_QUERY)
                     break;
+            }
+
+            foreach (var url in currentPageArticlesURLS)
+            {
+                try{
+            
+                    CrawlDetails(url.Key, url.Value);//, detailDriver);
+                }
+                catch
+                {
+                    Console.WriteLine("Incomplete page, ignoring");
+                }
             }
 
             //detailDriver.Dispose();
@@ -170,6 +176,7 @@ namespace SeleniumPubmedCrawler
                     if (nextPageButton != null)
                     {
                         nextPageButton.Click();
+                        Console.WriteLine("Next page...");
                         CrawlIndex();
                     }
                 }

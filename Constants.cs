@@ -12,7 +12,7 @@ namespace SeleniumPubmedCrawler
         internal static readonly string QUERY_PREFIX = @"(National University Of Singapore[Affiliation] AND ";
 
         // Number of articles to crawl before stopping (per name)
-        public const int MAX_ARTICLE_COUNT_PER_QUERY = 2;
+        public const int MAX_ARTICLE_COUNT_PER_QUERY = 10;
 
         // Names (temp list)
         // public static readonly string[] tempNames = { "Markus R Wenk", "Wong Wai-Shiu, Fred" };
