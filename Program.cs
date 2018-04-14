@@ -20,9 +20,15 @@ namespace SeleniumPubmedCrawler
 
         static int perQueryCounter = 0;
 
+        // For writing to json
+        static string sessionInfo;
+        static StreamWriter file;
+
         static void Main(string[] args)
         {
             PrintHeaders();
+
+            SetupFileIO();
 
             driver = SetupDriver();
 
@@ -37,11 +43,21 @@ namespace SeleniumPubmedCrawler
 
             Crawl(Constants.PUBMED_URL + Constants.QUERY_PREFIX);
 
-            ExportJSON();
+            // ExportJSON();
 
             Cleanup();
         }
 
+        static void SetupFileIO()
+        {
+            if (!Directory.Exists("dump")) 
+                Directory.CreateDirectory("dump");
+            
+            sessionInfo = DateTime.Now.ToString("yyyy_MM_dd_HHmm") + ".json";
+            string dir = @"dump\dump_" + sessionInfo;
+            file = File.CreateText(dir);
+
+        }
 
         static void PrintHeaders()
         {
@@ -163,8 +179,10 @@ namespace SeleniumPubmedCrawler
                 {
                     Console.WriteLine("Incomplete page, ignoring");
                 }
+
             }
 
+            ExportJSON();
             //detailDriver.Dispose();
 
             if (!(perQueryCounter >= Constants.MAX_ARTICLE_COUNT_PER_QUERY))
@@ -246,18 +264,13 @@ namespace SeleniumPubmedCrawler
         }
 
         static void ExportJSON()
-    {
+        {
             Console.WriteLine("\n[Info] Exporting results to JSON");
 
-            if (!Directory.Exists("dump")) 
-                Directory.CreateDirectory("dump");
-
-            using (StreamWriter file = File.CreateText(@"dump\dump_" + DateTime.Now.ToString("yyyy_MM_dd_HHmm") + ".json"))
-            {
-                JsonSerializer serializer = new JsonSerializer();
-                //serialize object directly into file stream
-                serializer.Serialize(file, articleList);
-            }
+            JsonSerializer serializer = new JsonSerializer();
+            //serialize object directly into file stream
+            serializer.Serialize(file, articleList);
+            articleList.Clear();
 
             Console.WriteLine("[Success] Data successfully exported");
         }
