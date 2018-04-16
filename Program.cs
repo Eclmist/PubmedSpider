@@ -27,7 +27,7 @@ namespace SeleniumPubmedCrawler
             driver = SetupDriver();
 
             journalsThatMatters = GetJournalsThatMatters();
-            
+
             if (journalsThatMatters.Length <= 0)
             {
                 Console.WriteLine("[Error] IF.txt empty! Exiting..");
@@ -82,7 +82,7 @@ namespace SeleniumPubmedCrawler
                 string query = url + name + "[Author])";
 
                 Console.WriteLine(query);
-                
+
                 driver.Navigate().GoToUrl(query);
                 Console.WriteLine("[Success] Webpage loaded");
 
@@ -101,7 +101,7 @@ namespace SeleniumPubmedCrawler
             }
             catch
             {
-            
+
                 Console.WriteLine("[Error] Names.txt does not exist! Creating empty Names.txt file.");
                 System.IO.File.Create(@"Names.txt");
             }
@@ -120,7 +120,7 @@ namespace SeleniumPubmedCrawler
             }
             catch
             {
-            
+
                 Console.WriteLine("[Error] IF.txt does not exist! Creating empty IF.txt file.");
                 System.IO.File.Create(@"IF.txt");
             }
@@ -130,23 +130,33 @@ namespace SeleniumPubmedCrawler
 
         static void CrawlIndex()
         {
-            Dictionary<string,string> currentPageArticlesURLS = new Dictionary<string, string>();
+            Dictionary<string, string> currentPageArticlesURLS = new Dictionary<string, string>();
             //ChromeDriver detailDriver = SetupDriver();
 
             var titles = driver.FindElementsByClassName(Constants.INDEX_TITLE_CLASS_NAME);
             var journals = driver.FindElementsByClassName(Constants.INDEX_JOURNAL_CLASS_NAME);
             for (int i = 0; i < titles.Count; i++)
             {
-                Console.WriteLine("Checking index " + i + " for impact factor");
-                // check if is part of journals that matters
                 string currentJournal = journals[i].Text;
-                Console.WriteLine("current journal: " + currentJournal);
-                
-                if (journalsThatMatters.Any(highImpactJournals => highImpactJournals == currentJournal))
+
+                if (Constants.FILTER_BY_IMPACT_FACTOR)
+                {
+
+                    Console.WriteLine("Checking index " + i + " for impact factor");
+                    // check if is part of journals that matters
+                    Console.WriteLine("current journal: " + currentJournal);
+
+                    if (journalsThatMatters.Any(highImpactJournals => highImpactJournals == currentJournal))
+                    {
+                        currentPageArticlesURLS.Add(titles[i].FindElement(By.CssSelector("a")).GetAttribute("href"), currentJournal);
+                    }
+
+                }
+                else 
                 {
                     currentPageArticlesURLS.Add(titles[i].FindElement(By.CssSelector("a")).GetAttribute("href"), currentJournal);
                 }
-            
+
                 perQueryCounter++;
 
                 if (perQueryCounter >= Constants.MAX_ARTICLE_COUNT_PER_QUERY)
@@ -155,13 +165,15 @@ namespace SeleniumPubmedCrawler
 
             foreach (var url in currentPageArticlesURLS)
             {
-                try{
-            
+                try
+                {
+
                     CrawlDetails(url.Key, url.Value);//, detailDriver);
                 }
                 catch
                 {
                     Console.WriteLine("Incomplete page, ignoring");
+
                 }
             }
 
@@ -224,9 +236,21 @@ namespace SeleniumPubmedCrawler
                 .SelectSingleNode(Constants.DETAIL_TITLE_XPATH)
                 .InnerText;
 
-            var abstractText = doc.DocumentNode
-                .SelectSingleNode(Constants.DETAIL_ABSTRACT_XPATH)
-                .InnerText;
+
+            // damn dumb but what the hell
+            string abstractText;
+
+            try { 
+                abstractText = doc.DocumentNode
+                    .SelectSingleNode(Constants.DETAIL_ABSTRACT_XPATH)
+                    .InnerText;
+            }
+            catch
+            {
+                abstractText = doc.DocumentNode
+                    .SelectSingleNode(Constants.DETAIL_ABSTRACT_XPATH_2)
+                    .InnerText;
+            }
 
             var date = doc.DocumentNode
                 .SelectSingleNode(Constants.DETAILS_DATE_XPATH)
@@ -246,10 +270,10 @@ namespace SeleniumPubmedCrawler
         }
 
         static void ExportJSON()
-    {
+        {
             Console.WriteLine("\n[Info] Exporting results to JSON");
 
-            if (!Directory.Exists("dump")) 
+            if (!Directory.Exists("dump"))
                 Directory.CreateDirectory("dump");
 
             using (StreamWriter file = File.CreateText(@"dump\dump_" + DateTime.Now.ToString("yyyy_MM_dd_HHmm") + ".json"))

@@ -12,7 +12,7 @@ namespace SeleniumPubmedCrawler
         internal static readonly string QUERY_PREFIX = @"(National University Of Singapore[Affiliation] AND ";
 
         // Number of articles to crawl before stopping (per name)
-        public const int MAX_ARTICLE_COUNT_PER_QUERY = 50;
+        public const int MAX_ARTICLE_COUNT_PER_QUERY = 10;
 
         // Names (temp list)
         // public static readonly string[] tempNames = { "Markus R Wenk", "Wong Wai-Shiu, Fred" };
@@ -26,6 +26,10 @@ namespace SeleniumPubmedCrawler
         internal static readonly string DETAILS_JOURNAL_XPATH = "//*[@id=\"maincontent\"]/div/div[5]/div/div[1]/span/a";
         internal static readonly string DETAILS_DATE_XPATH = "//*[@id=\"maincontent\"]/div/div[5]/div/div[1]";
         internal static readonly string DETAIL_ABSTRACT_XPATH = "//*[@id=\"maincontent\"]/div/div[5]/div/div[4]/div/p/abstracttext";
+        internal static readonly string DETAIL_ABSTRACT_XPATH_2 = "//*[@id=\"maincontent\"]/div/div[5]/div/div[4]/div/p/text()";
+
         internal static readonly string INDEX_JOURNAL_CLASS_NAME = "jrnl";
+
+        internal static readonly bool FILTER_BY_IMPACT_FACTOR = false;
     }
 }
