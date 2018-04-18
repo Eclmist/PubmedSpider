@@ -11,8 +11,10 @@ namespace SeleniumPubmedCrawler
         internal static readonly string PUBMED_URL = @"https://www.ncbi.nlm.nih.gov/pubmed/?term=";
         internal static readonly string QUERY_PREFIX = @"(National University Of Singapore[Affiliation] AND ";
 
+        internal static readonly string QUERY_DATE = "\"2018/04/16\"[Date - Publication] : \"3000\"[Date - Publication] AND ";
+
         // Number of articles to crawl before stopping (per name)
-        public const int MAX_ARTICLE_COUNT_PER_QUERY = 10;
+        public const int MAX_ARTICLE_COUNT_PER_QUERY = 50;
 
         // Names (temp list)
         // public static readonly string[] tempNames = { "Markus R Wenk", "Wong Wai-Shiu, Fred" };
@@ -30,6 +32,7 @@ namespace SeleniumPubmedCrawler
 
         internal static readonly string INDEX_JOURNAL_CLASS_NAME = "jrnl";
 
-        internal static readonly bool FILTER_BY_IMPACT_FACTOR = false;
+        internal static readonly bool FILTER_BY_IMPACT_FACTOR = true;
+
     }
 }

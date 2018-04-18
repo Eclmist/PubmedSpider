@@ -1,2 +1,84 @@
-Mol Ecol Resour
+ACS Appl Mater Interfaces
+Adv Healthc Mater
+Adv Mater
+Am J Clin Nutr
+Am J Hematol
+Am J Med
+Anal Chem
+Annu Rev Cell Dev Biol
+Asian Cardiovasc Thorac Ann
+Autophagy
+BMJ Case Rep
+Bioinformatics
+Biomaterials
+Biosens Bioelectron
+Blood
+Br J Anaesth
+Cancer Res
+Cardiovasc Res
+Case Rep Med
+Case Rep Orthop
+Cell Death Dis
+Cell Host Microbe
+Cell Rep
+ChemSusChem
+Chest
+Clin Gastroenterol Hepatol
+Clin Hypertens
+Conf Proc IEEE Eng Med Biol Soc
+Curr Opin Immunol
+Development
+EJNMMI Phys
+ELife
+EMBO J
+Eur J Cancer
+Free Radic Biol Med
+Front Immunol
+Gastroenterology
+Gut Microbes
+Head Neck Pathol
+Hepatology
+Hum Mol Genet
+Immunity
+Int J Epidemiol
+Int J Obes (Lond)
+Int J Orthop Trauma Nurs
 J Adv Nurs
+J Allergy Clin Immunol
+J Cell Biol
+J Chem Theory Comput
+J Clin Endocrinol Metab
+J Clin Invest
+J Diabetes
+J Hypertens
+J Nucl Med
+Lancet Glob Health
+Lancet Oncol
+Leukemia
+MBio
+Malays J Med Sci
+Metab Eng
+Mol Cell Proteomics
+Mol Neurobiol
+Nano Lett
+Nat Cell Biol
+Nat Commun
+Nat Genet
+Nat Immunol
+Nature
+Neurobiol Aging
+Neurology
+New Phytol
+Oncotarget
+PLoS Genet
+Pharmacol Ther
+Plant Signal Behav
+Proc Natl Acad Sci U S A
+Sci Rep
+Sci Transl Med
+Science
+Trends Immunol
+Trends Mol Med
+World J Hepatol
+World J Radiol
+Zhongguo Shi Yan Xue Ye Xue Za Zhi

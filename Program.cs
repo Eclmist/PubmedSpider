@@ -20,9 +20,13 @@ namespace SeleniumPubmedCrawler
 
         static int perQueryCounter = 0;
 
+        static string sessionID;
+
         static void Main(string[] args)
         {
             PrintHeaders();
+
+            sessionID = DateTime.Now.ToString("yyyy_MM_dd_HHmm");
 
             driver = SetupDriver();
 
@@ -37,7 +41,7 @@ namespace SeleniumPubmedCrawler
 
             Crawl(Constants.PUBMED_URL + Constants.QUERY_PREFIX);
 
-            ExportJSON();
+            // ExportJSON();
 
             Cleanup();
         }
@@ -79,7 +83,7 @@ namespace SeleniumPubmedCrawler
 
             foreach (string name in names)
             {
-                string query = url + name + "[Author])";
+                string query = url + Constants.QUERY_DATE + name + "[Author])";
 
                 Console.WriteLine(query);
 
@@ -177,6 +181,7 @@ namespace SeleniumPubmedCrawler
                 }
             }
 
+            ExportJSON();
             //detailDriver.Dispose();
 
             if (!(perQueryCounter >= Constants.MAX_ARTICLE_COUNT_PER_QUERY))
@@ -276,7 +281,7 @@ namespace SeleniumPubmedCrawler
             if (!Directory.Exists("dump"))
                 Directory.CreateDirectory("dump");
 
-            using (StreamWriter file = File.CreateText(@"dump\dump_" + DateTime.Now.ToString("yyyy_MM_dd_HHmm") + ".json"))
+            using (StreamWriter file = File.CreateText(@"dump\dump_" + sessionID + ".json"))
             {
                 JsonSerializer serializer = new JsonSerializer();
                 //serialize object directly into file stream
