@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
+using SeleniumPubmedCrawler.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,9 +13,10 @@ namespace SeleniumPubmedCrawler
 
     class Program
     {
-
         static ChromeDriver driver;
-        static List<Article> articleList = new List<Article>();
+        static List<Article> masterArticleList = new List<Article>();
+        static List<Journal> masterJournalList = new List<Journal>();
+        static List<Author> masterAuthorList = new List<Author>();
 
         static int perQueryCounter = 0;
 
@@ -26,7 +28,7 @@ namespace SeleniumPubmedCrawler
 
             Crawl(Constants.PUBMED_URL + Constants.QUERY_PREFIX);
 
-            ExportJSON();
+            saveToDb();
 
             Cleanup();
         }
@@ -160,24 +162,25 @@ namespace SeleniumPubmedCrawler
             {
                 if (node.Name == "PubmedArticle")
                 {
+                    Journal journal = new Journal();
+                    journal.name = node.SelectSingleNode(Constants.XPATH_JOURNAL).InnerText;
+                    journal.nameAbbreviation = node.SelectSingleNode(Constants.XPATH_JOURNAL_ABBREV).InnerText;
 
-                    Article a = new Article
-                    {
-                        PMID = node.SelectSingleNode("//MedlineCitation/PMID").InnerText,
-                        journal = node.SelectSingleNode("//MedlineCitation/Article/Journal/Title").InnerText,
-                        title = node.SelectSingleNode("//MedlineCitation/Article/ArticleTitle").InnerText,
-                        abstractTxt = node.SelectSingleNode("//MedlineCitation/Article/Abstract").InnerText
-                    };
+                    Article article = new Article();
+                    article.PMID = node.SelectSingleNode(Constants.XPATH_PMID).InnerText;
+                    article.title = node.SelectSingleNode(Constants.XPATH_ARTICLE_TITLE).InnerText;
+                    article.abstractTxt = node.SelectSingleNode(Constants.XPATH_ARTICLE_ABSTRACT).InnerText;
+                    article.journal = journal;
 
                     // Dates
-                    string pubYear = node.SelectSingleNode("//MedlineCitation/Article/ArticleDate/Year").InnerText;
-                    string pubMonth = node.SelectSingleNode("//MedlineCitation/Article/ArticleDate/Month").InnerText;
-                    string pubDay = node.SelectSingleNode("//MedlineCitation/Article/ArticleDate/Day").InnerText;
+                    string pubYear = node.SelectSingleNode(Constants.XPATH_ARTICLE_DATE_YEAR).InnerText;
+                    string pubMonth = node.SelectSingleNode(Constants.XPATH_ARTICLE_DATE_MONTH).InnerText;
+                    string pubDay = node.SelectSingleNode(Constants.XPATH_ARTICLE_DATE_DAY).InnerText;
 
-                    a.date = new DateTime(int.Parse(pubYear), int.Parse(pubMonth), int.Parse(pubDay));
+                    article.date = new DateTime(int.Parse(pubYear), int.Parse(pubMonth), int.Parse(pubDay));
 
                     // doi and whatnot
-                    XmlNodeList elocation = node.SelectNodes("//MedlineCitation/Article/ELocationID");
+                    XmlNodeList elocation = node.SelectNodes(Constants.XPATH_ELOCATION);
                     string pii = "", doi = "";
                     foreach (XmlNode eLoc in elocation)
                     {
@@ -191,55 +194,41 @@ namespace SeleniumPubmedCrawler
                             doi = eLoc.InnerText;
                         }
                     }
-                    a.doi = doi;
-                    a.pii = pii;
+                    article.doi = doi;
+                    article.pii = pii;
 
                     // Authors
-                    XmlNodeList authors = node.SelectNodes("//MedlineCitation/Article/AuthorList/Author");
-                    string authorString = "";
+                    XmlNodeList authors = node.SelectNodes(Constants.XPATH_ARTICLE_AUTHORS);
+                    List<Author> aList = new List<Author>();
                     foreach (XmlNode author in authors)
                     {
-                        string LastName = author.ChildNodes[0].InnerText;
-                        if (author.FirstChild.Name == "CollectiveName")
-                        {
-                            authorString += LastName + ";";
-                            continue;
-                        }
-
-                        string firstName = author.ChildNodes[1].InnerText;
-
-                        // Potentially store affliation per author here
-                        // //AffiliationInfo/Affiliation -> Dept. of Bio Sciences, NUS, Singapore, Singapore
-
-                        authorString += firstName + " " + LastName + ";";
-                        //                                            ^ delimiter
+                        Author a = new Author();
+                        aList.Add(a);
+                        masterAuthorList.Add(a);
+                        a.lastName = author.ChildNodes[0].InnerText;
+                        if (author.FirstChild.Name == "CollectiveName") { continue; }
+                        a.firstName = author.ChildNodes[1].InnerText;
+                        a.initials = author.ChildNodes[2].InnerText;
+                        a.affliation = author.ChildNodes[3].FirstChild.InnerText;
                     }
 
-                    a.authors = authorString;
+                    article.authors = aList;
+                    masterArticleList.Add(article);
 
-                    articleList.Add(a);
-
-                    Console.WriteLine("[Success] Article " + a.ToString() + " added");
+                    Console.WriteLine("[Success] Article " + article.ToString() + " added");
                     return;
                 }
             }
         }
 
-        static void ExportJSON()
+        static void saveToDb()
         {
-            Console.WriteLine("\n[Info] Exporting results to JSON");
-
-            if (!Directory.Exists("dump")) 
-                Directory.CreateDirectory("dump");
-
-            using (StreamWriter file = File.CreateText(@"dump\dump_" + DateTime.Now.ToString("yyyy_MM_dd_HHmm") + ".json"))
-            {
-                JsonSerializer serializer = new JsonSerializer();
-                //serialize object directly into file stream
-                serializer.Serialize(file, articleList);
-            }
-
-            Console.WriteLine("[Success] Data successfully exported");
+            Console.WriteLine("\n[Info] Saving to database");
+            ArticleDBContext context = new ArticleDBContext();
+            context.Article.AddRange(masterArticleList);
+            context.Author.AddRange(masterAuthorList);
+            context.Journal.AddRange(masterJournalList);
+            Console.WriteLine("[Success] Data successfully saved to database");
         }
 
         static void Cleanup()
