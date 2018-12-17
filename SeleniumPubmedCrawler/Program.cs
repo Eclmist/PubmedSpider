@@ -4,7 +4,8 @@ using OpenQA.Selenium.Chrome;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using System.Net;
+using System.Xml;
 
 namespace SeleniumPubmedCrawler
 {
@@ -94,8 +95,6 @@ namespace SeleniumPubmedCrawler
         {
             List<string> currentPageArticlesURLS = new List<string>();
 
-            ChromeDriver detailDriver = SetupDriver();
-
             var titles = driver.FindElementsByClassName(Constants.INDEX_TITLE_CLASS_NAME);
 
             foreach (var link in titles)
@@ -105,14 +104,20 @@ namespace SeleniumPubmedCrawler
 
             foreach (string url in currentPageArticlesURLS)
             {
-                CrawlDetails(url, detailDriver);
+                try
+                {
+                    CrawlDetails(url);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+
                 perQueryCounter++;
 
                 if (perQueryCounter >= Constants.MAX_ARTICLE_COUNT_PER_QUERY)
                     break;
             }
-
-            detailDriver.Dispose();
 
             if (!(perQueryCounter >= Constants.MAX_ARTICLE_COUNT_PER_QUERY))
             {
@@ -135,35 +140,89 @@ namespace SeleniumPubmedCrawler
             Console.WriteLine("[Success] Reached max article per query count");
         }
 
-        static void CrawlDetails(string url, ChromeDriver driver)
+        static void CrawlDetails(string url)
         {
-            driver.Navigate().GoToUrl(url);
-
-            List<String> authors = new List<string>();
-
-            var listOfAuthorNames = driver.FindElementByClassName(Constants.DETAIL_AUTHOR_CLASS_NAME)
-                .FindElements(By.CssSelector("a"));
-
-            foreach (IWebElement author in listOfAuthorNames)
+            string xmlPath = url + "?report=xml&format=text";
+            // download xml
+            string xmlString;
+            using (var wc = new WebClient())
             {
-                authors.Add(author.Text);
+                xmlString = wc.DownloadString(xmlPath);
+                // HACKKKKK I WASTED 3 HOURS HERE SOMEONE HALP ME
+                xmlString = xmlString.Replace("&lt;", "<");
+                xmlString = xmlString.Replace("&gt;", ">");
             }
 
-            string title = driver.FindElementByXPath(Constants.DETAIL_TITLE_XPATH).Text;
-            string abstractText = driver.FindElementByCssSelector(Constants.DETAIL_ABSTRACT_CSS_SELECTOR).Text;
-            string journal = driver.FindElementByXPath(Constants.DETAILS_JOURNAL_XPATH).Text.Split('.')[0];
-            string date = driver.FindElementByXPath(Constants.DETAILS_DATE_XPATH).Text.Split('.')[1].TrimStart(' ');
+            XmlDocument doc = new XmlDocument();
+            doc.LoadXml(xmlString);
 
-            Article a = new Article();
-            a.title = title;
-            a.authors = authors.ToArray();
-            a.abstractTxt = abstractText;
-            a.journal = journal;
-            a.date = date;
+            foreach(XmlNode node in doc.DocumentElement)
+            {
+                if (node.Name == "PubmedArticle")
+                {
 
-            articleList.Add(a);
+                    Article a = new Article
+                    {
+                        PMID = node.SelectSingleNode("//MedlineCitation/PMID").InnerText,
+                        journal = node.SelectSingleNode("//MedlineCitation/Article/Journal/Title").InnerText,
+                        title = node.SelectSingleNode("//MedlineCitation/Article/ArticleTitle").InnerText,
+                        abstractTxt = node.SelectSingleNode("//MedlineCitation/Article/Abstract").InnerText
+                    };
 
-            Console.WriteLine("[Success] Article " + a.ToString() + " added");
+                    // Dates
+                    string pubYear = node.SelectSingleNode("//MedlineCitation/Article/ArticleDate/Year").InnerText;
+                    string pubMonth = node.SelectSingleNode("//MedlineCitation/Article/ArticleDate/Month").InnerText;
+                    string pubDay = node.SelectSingleNode("//MedlineCitation/Article/ArticleDate/Day").InnerText;
+
+                    a.date = new DateTime(int.Parse(pubYear), int.Parse(pubMonth), int.Parse(pubDay));
+
+                    // doi and whatnot
+                    XmlNodeList elocation = node.SelectNodes("//MedlineCitation/Article/ELocationID");
+                    string pii = "", doi = "";
+                    foreach (XmlNode eLoc in elocation)
+                    {
+                        string attrib = eLoc.Attributes[0].InnerText;
+                        if (attrib == "pii")
+                        {
+                            pii = eLoc.InnerText;
+                        }
+                        else if (attrib == "doi")
+                        {
+                            doi = eLoc.InnerText;
+                        }
+                    }
+                    a.doi = doi;
+                    a.pii = pii;
+
+                    // Authors
+                    XmlNodeList authors = node.SelectNodes("//MedlineCitation/Article/AuthorList/Author");
+                    string authorString = "";
+                    foreach (XmlNode author in authors)
+                    {
+                        string LastName = author.ChildNodes[0].InnerText;
+                        if (author.FirstChild.Name == "CollectiveName")
+                        {
+                            authorString += LastName + ";";
+                            continue;
+                        }
+
+                        string firstName = author.ChildNodes[1].InnerText;
+
+                        // Potentially store affliation per author here
+                        // //AffiliationInfo/Affiliation -> Dept. of Bio Sciences, NUS, Singapore, Singapore
+
+                        authorString += firstName + " " + LastName + ";";
+                        //                                            ^ delimiter
+                    }
+
+                    a.authors = authorString;
+
+                    articleList.Add(a);
+
+                    Console.WriteLine("[Success] Article " + a.ToString() + " added");
+                    return;
+                }
+            }
         }
 
         static void ExportJSON()
