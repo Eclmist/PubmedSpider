@@ -16,27 +16,30 @@ namespace SeleniumPubmedCrawler
 
         // Names (temp list)
         // public static readonly string[] tempNames = { "Markus R Wenk", "Wong Wai-Shiu, Fred" };
-        
-        // Obsolete
-        //public const string INDEX_ITEMCOUNT_CLASS_NAME = "result_count";
-        //public const string DETAIL_TITLE_XPATH = "//*[@id=\"maincontent\"]/div/div[5]/div/h1";
-        //public const string DETAIL_AUTHOR_CLASS_NAME = "auths";
-        //public const string DETAIL_ABSTRACT_CSS_SELECTOR = "abstracttext";
-        //public const string DETAILS_JOURNAL_XPATH = "//*[@id=\"maincontent\"]/div/div[5]/div/div[1]/span/a";
-        //public const string DETAILS_DATE_XPATH = "//*[@id=\"maincontent\"]/div/div[5]/div/div[1]";
 
         public const string INDEX_TITLE_CLASS_NAME = "title";
 
         public const string XPATH_PMID = "//MedlineCitation/PMID";
         public const string XPATH_JOURNAL = "//MedlineCitation/Article/Journal/Title";
         public const string XPATH_JOURNAL_ABBREV = "//MedlineCitation/Article/Journal/ISOAbbreviation";
-        public const string XPATH_ARTICLE_DATE_YEAR = "//MedlineCitation/Article/ArticleDate/Year";
+        public const string XPATH_JOURNAL_ID = "//MedlineCitation/MedlineJournalInfo/NlmUniqueID";
         public const string XPATH_ARTICLE_AUTHORS = "//MedlineCitation/Article/AuthorList/Author";
         public const string XPATH_ARTICLE_TITLE = "//MedlineCitation/Article/ArticleTitle";
-        public const string XPATH_ARTICLE_DATE_MONTH = "//MedlineCitation/Article/ArticleDate/Month";
-        public const string XPATH_ARTICLE_DATE_DAY = "//MedlineCitation/Article/ArticleDate/Day";
         public const string XPATH_ELOCATION = "//MedlineCitation/Article/ELocationID";
         public const string XPATH_ARTICLE_ABSTRACT = "//MedlineCitation/Article/Abstract";
 
+        public const string XPATH_ARTICLE_DATE_YEAR_LOC1 = "//MedlineCitation/Article/Journal/JournalIssue/PubDate/Year";
+        public const string XPATH_ARTICLE_DATE_MONTH_LOC1 = "//MedlineCitation/Article/Journal/JournalIssue/PubDate/Month";
+        public const string XPATH_ARTICLE_DATE_DAY_LOC1 = "//MedlineCitation/Article/Journal/JournalIssue/PubDate/Day";
+        public const string XPATH_ARTICLE_DATE_YEAR_LOC2 = "//MedlineCitation/Article/ArticleDate/Year";
+        public const string XPATH_ARTICLE_DATE_MONTH_LOC2 = "//MedlineCitation/Article/ArticleDate/Month";
+        public const string XPATH_ARTICLE_DATE_DAY_LOC2 = "//MedlineCitation/Article/ArticleDate/Day";
+
+        public static readonly string[] KNOWN_DATE_FORMATS = {
+            "dd-MMM-yyyy",
+            "dd-mm-yyyy",
+            "dd-mm-yy",
+            "dd-MMM-yy"
+        };
     }
 }

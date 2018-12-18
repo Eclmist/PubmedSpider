@@ -11,12 +11,48 @@ namespace SeleniumPubmedCrawler.Models
     [Table("Author")]
     public class Author
     {
-        [Key, Column(Order=0)] 
+        [Key] public Guid ID { get; set; }
         public string firstName { get; set; }
-        [Key, Column(Order=1)] 
         public string lastName { get; set; }
-        [Key, Column(Order=2)] 
         public string initials { get; set; }
         public string affliation { get; set; }
+        public List<Article> articles { get; set; }
+
+        public Author (string fn, string ln)
+        {
+            ID = Guid.NewGuid();
+            firstName = fn;
+            lastName = ln;
+        }
+
+        public Author ()
+        {
+            ID = Guid.NewGuid();
+        }
+
+        public override bool Equals(object obj)
+        {
+            var other = obj as Author;
+
+            if (other == null)
+            {
+                return false;
+            }
+
+            return ID.Equals(other.ID) || 
+                (firstName == other.firstName && lastName == other.lastName);
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = 2132695694;
+            hashCode = hashCode * -1521134295 + EqualityComparer<Guid>.Default.GetHashCode(ID);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(firstName);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(lastName);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(initials);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(affliation);
+            hashCode = hashCode * -1521134295 + EqualityComparer<List<Article>>.Default.GetHashCode(articles);
+            return hashCode;
+        }
     }
 }

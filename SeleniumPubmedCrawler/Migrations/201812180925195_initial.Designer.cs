@@ -13,7 +13,7 @@ namespace SeleniumPubmedCrawler.Migrations
         
         string IMigrationMetadata.Id
         {
-            get { return "201812171453334_initial"; }
+            get { return "201812180925195_initial"; }
         }
         
         string IMigrationMetadata.Source

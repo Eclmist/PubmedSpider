@@ -71,9 +71,17 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Migrations\201812171453334_initial.cs" />
-    <Compile Include="Migrations\201812171453334_initial.Designer.cs">
-      <DependentUpon>201812171453334_initial.cs</DependentUpon>
+    <Compile Include="Migrations\201812180925195_initial.cs" />
+    <Compile Include="Migrations\201812180925195_initial.Designer.cs">
+      <DependentUpon>201812180925195_initial.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201812181044125_deployment.cs" />
+    <Compile Include="Migrations\201812181044125_deployment.Designer.cs">
+      <DependentUpon>201812181044125_deployment.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201812181105391_deployment-2.cs" />
+    <Compile Include="Migrations\201812181105391_deployment-2.Designer.cs">
+      <DependentUpon>201812181105391_deployment-2.cs</DependentUpon>
     </Compile>
     <Compile Include="Models\Article.cs" />
     <Compile Include="ArticleDBContext.cs" />
@@ -89,8 +97,14 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Migrations\201812171453334_initial.resx">
-      <DependentUpon>201812171453334_initial.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201812180925195_initial.resx">
+      <DependentUpon>201812180925195_initial.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201812181044125_deployment.resx">
+      <DependentUpon>201812181044125_deployment.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201812181105391_deployment-2.resx">
+      <DependentUpon>201812181105391_deployment-2.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

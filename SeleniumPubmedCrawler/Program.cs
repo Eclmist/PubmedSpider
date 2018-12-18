@@ -4,7 +4,10 @@ using OpenQA.Selenium.Chrome;
 using SeleniumPubmedCrawler.Models;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity.Validation;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Xml;
 
@@ -17,6 +20,8 @@ namespace SeleniumPubmedCrawler
         static List<Article> masterArticleList = new List<Article>();
         static List<Journal> masterJournalList = new List<Journal>();
         static List<Author> masterAuthorList = new List<Author>();
+
+        static ArticleDBContext dbContext = new ArticleDBContext();
 
         static int perQueryCounter = 0;
 
@@ -52,7 +57,6 @@ namespace SeleniumPubmedCrawler
 
             ChromeDriverService service = ChromeDriverService.CreateDefaultService();
             service.SuppressInitialDiagnosticInformation = true;
-
 
 #if !DEBUG
                 options.AddArguments("--headless", "--disable-gpu", "--ignore-certificate-errors", "--incognito");
@@ -110,12 +114,13 @@ namespace SeleniumPubmedCrawler
                 {
                     CrawlDetails(url);
                 }
-                catch (Exception e)
+                    catch (Exception e)
                 {
-                    Console.WriteLine(e.Message);
+                    Console.WriteLine("[Error] " + e.Message + " on article " + url);
+                    continue;
                 }
 
-                perQueryCounter++;
+            perQueryCounter++;
 
                 if (perQueryCounter >= Constants.MAX_ARTICLE_COUNT_PER_QUERY)
                     break;
@@ -162,22 +167,36 @@ namespace SeleniumPubmedCrawler
             {
                 if (node.Name == "PubmedArticle")
                 {
-                    Journal journal = new Journal();
-                    journal.name = node.SelectSingleNode(Constants.XPATH_JOURNAL).InnerText;
-                    journal.nameAbbreviation = node.SelectSingleNode(Constants.XPATH_JOURNAL_ABBREV).InnerText;
+                    string pubmedID = node.SelectSingleNode(Constants.XPATH_PMID).InnerText;
+
+                    // if we somehow crawled this article before during this current execution
+                    if (masterArticleList.Find(x => x.pubmedID == pubmedID) != null)
+                    {
+                        continue;
+                    }
+
+                    string journalNlmUniqueID = node.SelectSingleNode(Constants.XPATH_JOURNAL_ID).InnerText;
+                    // check if we have a journal already
+                    Journal journal = masterJournalList.Find(x => x.nlmUniqueID == journalNlmUniqueID);
+
+                    if (journal == null)
+                    {
+                        journal = new Journal();
+                        journal.nlmUniqueID = journalNlmUniqueID;
+                        journal.name = node.SelectSingleNode(Constants.XPATH_JOURNAL).InnerText;
+                        journal.nameAbbreviation = node.SelectSingleNode(Constants.XPATH_JOURNAL_ABBREV).InnerText;
+                        masterJournalList.Add(journal);
+                    }
 
                     Article article = new Article();
-                    article.PMID = node.SelectSingleNode(Constants.XPATH_PMID).InnerText;
+                    article.pubmedID = pubmedID;
                     article.title = node.SelectSingleNode(Constants.XPATH_ARTICLE_TITLE).InnerText;
                     article.abstractTxt = node.SelectSingleNode(Constants.XPATH_ARTICLE_ABSTRACT).InnerText;
                     article.journal = journal;
+                    article.journalID = journal.nlmUniqueID;
 
                     // Dates
-                    string pubYear = node.SelectSingleNode(Constants.XPATH_ARTICLE_DATE_YEAR).InnerText;
-                    string pubMonth = node.SelectSingleNode(Constants.XPATH_ARTICLE_DATE_MONTH).InnerText;
-                    string pubDay = node.SelectSingleNode(Constants.XPATH_ARTICLE_DATE_DAY).InnerText;
-
-                    article.date = new DateTime(int.Parse(pubYear), int.Parse(pubMonth), int.Parse(pubDay));
+                    article.publicationDate = parseDisgustingDates(node);
 
                     // doi and whatnot
                     XmlNodeList elocation = node.SelectNodes(Constants.XPATH_ELOCATION);
@@ -203,13 +222,22 @@ namespace SeleniumPubmedCrawler
                     foreach (XmlNode author in authors)
                     {
                         Author a = new Author();
-                        aList.Add(a);
-                        masterAuthorList.Add(a);
                         a.lastName = author.ChildNodes[0].InnerText;
                         if (author.FirstChild.Name == "CollectiveName") { continue; }
                         a.firstName = author.ChildNodes[1].InnerText;
                         a.initials = author.ChildNodes[2].InnerText;
                         a.affliation = author.ChildNodes[3].FirstChild.InnerText;
+
+                        if (masterAuthorList.Contains(a))
+                        {
+                            a = masterAuthorList.Find(x => x.Equals(a));
+                        }
+                        else
+                        {
+                            masterAuthorList.Add(a);
+                        }
+
+                        aList.Add(a);
                     }
 
                     article.authors = aList;
@@ -221,14 +249,112 @@ namespace SeleniumPubmedCrawler
             }
         }
 
+        static DateTime parseDisgustingDates(XmlNode node)
+        {
+            string dateTimeString = "";
+
+            // try get journal publication month/year
+            try
+            {
+                // some don't include day
+                string day;
+
+                try
+                {
+                    day = node.SelectSingleNode(Constants.XPATH_ARTICLE_DATE_DAY_LOC1).InnerText;
+                }
+                catch
+                {
+                    day = "01";
+                }
+
+                dateTimeString += day + "-";
+                dateTimeString += node.SelectSingleNode(Constants.XPATH_ARTICLE_DATE_MONTH_LOC1).InnerText + "-";
+                dateTimeString += node.SelectSingleNode(Constants.XPATH_ARTICLE_DATE_YEAR_LOC1).InnerText;
+
+            }
+            catch
+            {
+                dateTimeString = "";
+                dateTimeString += node.SelectSingleNode(Constants.XPATH_ARTICLE_DATE_DAY_LOC2).InnerText + "-";
+                dateTimeString += node.SelectSingleNode(Constants.XPATH_ARTICLE_DATE_MONTH_LOC2).InnerText + "-";
+                dateTimeString += node.SelectSingleNode(Constants.XPATH_ARTICLE_DATE_YEAR_LOC2).InnerText;
+            }
+
+            // actually parsing the damn thing into a date time
+
+            foreach (string format in Constants.KNOWN_DATE_FORMATS)
+            {
+                try
+                {
+                    return DateTime.ParseExact(dateTimeString, format, CultureInfo.InvariantCulture);
+                }
+                catch
+                {
+                    continue;
+                }
+            }
+
+            Console.WriteLine("[Info] Gave up parsing date \"" + dateTimeString + "\" and will substitute with current time.");
+            Console.WriteLine("\tYou may want to add this format into the array of known formats");
+
+            return DateTime.Now;
+        }
+
         static void saveToDb()
         {
-            Console.WriteLine("\n[Info] Saving to database");
-            ArticleDBContext context = new ArticleDBContext();
-            context.Article.AddRange(masterArticleList);
-            context.Author.AddRange(masterAuthorList);
-            context.Journal.AddRange(masterJournalList);
-            Console.WriteLine("[Success] Data successfully saved to database");
+            Console.WriteLine("\n[Info] Saving to database... ");
+            try
+            {
+                // remove all articles that already exist in db
+                masterArticleList.RemoveAll(x => dbContext.Article.Any(o => o.pubmedID == x.pubmedID));
+
+                foreach (Article article in masterArticleList)
+                {
+
+                    // make sure no dup authors
+                    for (int i = 0; i < article.authors.Count; i++)
+                    {
+                        string fn = article.authors[i].firstName;
+                        string ln = article.authors[i].lastName;
+                        Author existingRecord = dbContext.Author
+                            .Where(a => a.firstName == fn && a.lastName == ln)
+                            .FirstOrDefault();
+
+                        if (existingRecord != null)
+                        {
+                            // make sure it doesn't make a new record
+                            article.authors[i] = existingRecord;
+                        }
+                    }
+
+                    // make sure no dup journals
+                    Journal dbJournal = dbContext.Journal.Find(article.journal.nlmUniqueID);
+
+                    if (dbJournal != null)
+                    {
+                        article.journal = dbJournal;
+                    }
+                }
+
+                dbContext.Article.AddRange(masterArticleList);
+                dbContext.SaveChanges();
+                Console.WriteLine("[Success] Data successfully saved to database");
+            }
+            catch (DbEntityValidationException e)
+            {
+                foreach (var eve in e.EntityValidationErrors)
+                {
+                    Console.WriteLine("[SQL Error] Entity of type \"{0}\" in state \"{1}\" has the following validation errors:",
+                        eve.Entry.Entity.GetType().Name, eve.Entry.State);
+                    foreach (var ve in eve.ValidationErrors)
+                    {
+                        Console.WriteLine("- Property: \"{0}\", Error: \"{1}\"",
+                            ve.PropertyName, ve.ErrorMessage);
+                    }
+                }
+                throw;
+            }
         }
 
         static void Cleanup()
